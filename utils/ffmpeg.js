@@ -1,16 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFFmpeg = void 0;
-const ffmpeg_1 = require("@ffmpeg/ffmpeg");
-let ffmpeg = undefined;
+const ffmpeg_static_1 = __importDefault(require("ffmpeg-static"));
+const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
+// Tell fluent-ffmpeg where it can find FFmpeg
+fluent_ffmpeg_1.default.setFfmpegPath(ffmpeg_static_1.default);
 const getFFmpeg = async () => {
-    if (!ffmpeg) {
-        ffmpeg = new ffmpeg_1.FFmpeg();
-        ffmpeg.on('log', ({ message }) => {
-            console.log(message);
-        });
-        await ffmpeg.load();
-    }
-    return ffmpeg;
+    return fluent_ffmpeg_1.default;
 };
 exports.getFFmpeg = getFFmpeg;

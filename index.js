@@ -35,7 +35,6 @@ const http_1 = __importDefault(require("http"));
 require("./lib/wasm_exec.js");
 const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
 const timer_1 = require("./utils/timer");
-const string_1 = require("./utils/string");
 const audio_1 = require("./utils/audio");
 const Version = "1.0.0";
 // Define the command
@@ -66,7 +65,8 @@ const Version = "1.0.0";
         });
         const result = global.coLoadCSMPFile(fileBuffer);
         console.log(`Converting ${argv.csmp}...`);
-        const port = 8080; // You can choose a different port if needed
+        const outFile = `${argv.csmp}.mp4`;
+        const port = 9927; // You can choose a different port if needed
         const server = http_1.default.createServer((req, res) => {
             res.writeHead(200, {
                 'Access-Control-Allow-Origin': '*', // Allow CORS from your origin
@@ -77,7 +77,7 @@ const Version = "1.0.0";
         });
         server.listen(port, () => { });
         const browser = await puppeteer_1.default.launch({
-            headless: false,
+            headless: true,
             executablePath: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
         });
         const page = await browser.newPage();
@@ -96,21 +96,23 @@ const Version = "1.0.0";
             videoBitrate: 5000000,
             aspectRatio: '16:9',
         });
-        const tmpConvertedFile = `${argv.csmp}.${(0, string_1.generateRandomString)(5)}`;
-        await recorder.start(tmpConvertedFile);
+        await recorder.start(outFile);
         await page.evaluate(() => {
             document.querySelector('[data-purpose=play-btn]').click();
         });
         await page.waitForSelector("[data-ended=y]");
         await recorder.stop();
         await browser.close();
-        const outBuffer = await (0, audio_1.mergeAudiosIntoVideo)(await fs.promises.readFile(tmpConvertedFile), Object.keys(result.components)
+        await (0, audio_1.mergeAudiosIntoVideo)(argv.csmp, outFile, Object.keys(result.components)
+            .filter(componentName => {
+            const c = result.sessionInitFile.timeline.find(c => c.componentName === componentName);
+            return c.componentType === "cherrycam" || c.componentType === "cherrymediafile";
+        })
             .map(componentName => ({
             content: new Uint8Array(result.components[componentName]),
             startFromSecond: result.sessionInitFile.timeline.find(c => c.componentName === componentName).startFromSecond
         })));
-        const outFileName = `${argv.csmp}.mp4`;
-        await fs.promises.writeFile(outFileName, outBuffer);
+        console.log(`Done. ${outFile} has been created`);
         process.exit(0);
     }
     catch (e) {
