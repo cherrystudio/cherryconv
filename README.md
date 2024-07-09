@@ -1,3 +1,3 @@
 # Cherry Studio
 
-Checkout [documents](https://docs.cherrtstudio.io)
+Checkout [documents](https://docs.cherrystudio.io)
